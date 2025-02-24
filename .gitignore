@@ -1,0 +1,8 @@
+.idea
+.vscode
+.DS_Store
+/vendor/
+/var/
+/composer.lock
+/.php-cs-fixer.cache
+/Build/
