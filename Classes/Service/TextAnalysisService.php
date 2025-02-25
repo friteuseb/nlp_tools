@@ -134,6 +134,11 @@ class TextAnalysisService implements SingletonInterface
         // Tokenization plus avancée avec support Unicode
         $tokens = preg_split('/[\s,\.!?\(\)\[\]{}"\']+/u', $text, -1, PREG_SPLIT_NO_EMPTY);
         
+        // Check if preg_split failed and returned false
+        if ($tokens === false) {
+            return []; // Return empty array instead of false
+        }
+        
         return array_filter($tokens, function($token) {
             return mb_strlen($token) > 1; // Ignorer les tokens trop courts
         });
