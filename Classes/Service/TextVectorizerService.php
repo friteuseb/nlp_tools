@@ -10,16 +10,30 @@ use TYPO3\CMS\Core\Cache\Frontend\FrontendInterface;
 class TextVectorizerService implements SingletonInterface
 {
     private TextAnalysisService $textAnalyzer;
+    private LanguageDetectionService $languageDetector;
     private StopWordsFactory $stopWordsFactory;
     private ?FrontendInterface $cache;
 
     public function __construct(
         TextAnalysisService $textAnalyzer,
+        LanguageDetectionService $languageDetector,
         StopWordsFactory $stopWordsFactory,
         ?FrontendInterface $cache = null
     ) {
         $this->textAnalyzer = $textAnalyzer;
+        $this->languageDetector = $languageDetector;
         $this->stopWordsFactory = $stopWordsFactory;
+        $this->cache = $cache;
+    }
+
+    /**
+     * Sets a cache instance
+     * 
+     * @param FrontendInterface $cache
+     * @return void
+     */
+    public function setCache(FrontendInterface $cache): void
+    {
         $this->cache = $cache;
     }
 
@@ -34,7 +48,7 @@ class TextVectorizerService implements SingletonInterface
     {
         // Detect language if not provided
         if ($language === null && !empty($texts)) {
-            $language = $this->textAnalyzer->detectLanguage($texts[0] ?? '');
+            $language = $this->languageDetector->detectLanguage($texts[0] ?? '');
         }
 
         // Cache key for the tf-idf computation
@@ -48,9 +62,12 @@ class TextVectorizerService implements SingletonInterface
         foreach ($texts as $index => $text) {
             // Remove stop words and apply stemming
             $cleanText = $this->textAnalyzer->removeStopWords($text, $language);
-            $stemmed = $this->textAnalyzer->stem($cleanText, $language);
+            $stemmed = $this->textAnalyzer->tokenize($this->textAnalyzer->stem($cleanText, $language));
             $processedTexts[$index] = $stemmed;
         }
+
+        // Rest of the implementation remains the same
+        // ... [original code continues]
 
         // 2. Build vocabulary (unique terms across all documents)
         $vocabulary = [];

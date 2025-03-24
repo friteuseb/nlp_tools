@@ -1,6 +1,6 @@
-# NLP Tools pour TYPO3
+# NLP Tools for TYPO3
 
-Une extension TYPO3 complète pour le traitement du langage naturel, compatible avec TYPO3 v12 et v13.
+A comprehensive TYPO3 extension for Natural Language Processing, compatible with TYPO3 v12 and v13.
 
 ## Installation
 
@@ -8,18 +8,18 @@ Une extension TYPO3 complète pour le traitement du langage naturel, compatible 
 composer require cywolf/nlp-tools
 ```
 
-Activer l'extension dans le gestionnaire d'extensions de TYPO3.
+Activate the extension in the TYPO3 extension manager.
 
-## Fonctionnalités disponibles
+## Available Features
 
-### 1. Gestion des mots vides (Stop Words)
+### 1. Stop Words Management
 
-Permet de filtrer les mots vides dans différentes langues (FR, EN, DE, ES).
+Filter stop words in different languages (FR, EN, DE, ES).
 
 ```php
 use Cywolf\NlpTools\Service\StopWordsFactory;
 
-class VotreClasse {
+class YourClass {
     protected StopWordsFactory $stopWordsFactory;
 
     public function __construct(StopWordsFactory $stopWordsFactory) 
@@ -27,30 +27,30 @@ class VotreClasse {
         $this->stopWordsFactory = $stopWordsFactory;
     }
 
-    public function exempleStopWords(): void 
+    public function stopWordsExample(): void 
     {
-        // Récupérer les stopwords pour une langue
+        // Get stop words for a language
         $frenchStopWords = $this->stopWordsFactory->getStopWords('fr');
 
-        // Vérifier si un mot est un stopword
+        // Check if a word is a stop word
         if ($frenchStopWords->isStopWord('le')) {
-            // C'est un stopword
+            // It's a stop word
         }
 
-        // Obtenir la liste complète des stopwords
+        // Get the complete list of stop words
         $allStopWords = $frenchStopWords->getStopWords();
     }
 }
 ```
 
-### 2. Détection de langue
+### 2. Language Detection
 
-Service automatique de détection de langue basé sur les n-grammes.
+Automatic language detection service based on n-grams.
 
 ```php
 use Cywolf\NlpTools\Service\LanguageDetectionService;
 
-class VotreClasse {
+class YourClass {
     protected LanguageDetectionService $languageDetector;
 
     public function __construct(LanguageDetectionService $languageDetector) 
@@ -58,22 +58,22 @@ class VotreClasse {
         $this->languageDetector = $languageDetector;
     }
 
-    public function exempleDetection(): string 
+    public function detectionExample(): string 
     {
-        $texte = "Voici un exemple de texte en français";
-        return $this->languageDetector->detectLanguage($texte); // Retourne 'fr'
+        $text = "This is an example of English text";
+        return $this->languageDetector->detectLanguage($text); // Returns 'en'
     }
 }
 ```
 
-### 3. Analyse de texte
+### 3. Text Analysis
 
-Service complet d'analyse de texte incluant tokenization, stemming et extraction de n-grammes.
+Complete text analysis service including tokenization, stemming, and removal of stop words.
 
 ```php
 use Cywolf\NlpTools\Service\TextAnalysisService;
 
-class VotreClasse {
+class YourClass {
     protected TextAnalysisService $textAnalyzer;
 
     public function __construct(TextAnalysisService $textAnalyzer) 
@@ -81,40 +81,36 @@ class VotreClasse {
         $this->textAnalyzer = $textAnalyzer;
     }
 
-    public function exempleAnalyse(): array 
+    public function analysisExample(): array 
     {
-        $texte = "Voici un exemple de texte à analyser";
+        $text = "Here is an example text to analyze";
 
         // Tokenization
-        $tokens = $this->textAnalyzer->tokenize($texte);
+        $tokens = $this->textAnalyzer->tokenize($text);
 
-        // Stemming (avec Snowball)
-        $stemmed = $this->textAnalyzer->stem($texte, 'fr');
+        // Stemming
+        $stemmed = $this->textAnalyzer->stem($text, 'en');
 
-        // Extraction de n-grammes
-        $trigrams = $this->textAnalyzer->extractNGrams($texte, 3);
-
-        // Suppression des stopwords
-        $sansStopWords = $this->textAnalyzer->removeStopWords($texte, 'fr');
+        // Remove stop words
+        $withoutStopWords = $this->textAnalyzer->removeStopWords($text, 'en');
 
         return [
             'tokens' => $tokens,
             'stemmed' => $stemmed,
-            'trigrams' => $trigrams,
-            'cleaned' => $sansStopWords
+            'cleaned' => $withoutStopWords
         ];
     }
 }
 ```
 
-### 4. Vectorisation de texte
+### 4. Text Vectorization
 
-Service permettant de convertir du texte en représentations vectorielles pour le machine learning.
+Service for converting text into vector representations for machine learning.
 
 ```php
 use Cywolf\NlpTools\Service\TextVectorizerService;
 
-class VotreClasse {
+class YourClass {
     protected TextVectorizerService $vectorizer;
 
     public function __construct(TextVectorizerService $vectorizer) 
@@ -122,47 +118,47 @@ class VotreClasse {
         $this->vectorizer = $vectorizer;
     }
 
-    public function exempleVectorisation(): array 
+    public function vectorizationExample(): array 
     {
-        $textes = [
-            "Voici le premier document à analyser",
-            "Un second document avec du contenu différent",
-            "Et finalement un troisième exemple"
+        $texts = [
+            "This is the first document to analyze",
+            "A second document with different content",
+            "And finally a third example"
         ];
 
-        // Créer des vecteurs TF-IDF
-        $tfIdfData = $this->vectorizer->createTfIdfVectors($textes, 'fr');
+        // Create TF-IDF vectors
+        $tfIdfData = $this->vectorizer->createTfIdfVectors($texts, 'en');
         
-        // Créer une matrice document-terme
-        $dtmData = $this->vectorizer->createDocumentTermMatrix($textes, 'fr');
+        // Create document-term matrix
+        $dtmData = $this->vectorizer->createDocumentTermMatrix($texts, 'en');
         
-        // Calculer la similarité entre deux vecteurs
-        $similarite = $this->vectorizer->cosineSimilarity(
+        // Calculate similarity between two vectors
+        $similarity = $this->vectorizer->cosineSimilarity(
             $tfIdfData['vectors'][0],
             $tfIdfData['vectors'][1]
         );
         
-        // Calculer une matrice de similarité
+        // Calculate similarity matrix
         $similarityMatrix = $this->vectorizer->calculateSimilarityMatrix($tfIdfData['vectors']);
         
         return [
             'tfidf' => $tfIdfData,
             'dtm' => $dtmData,
-            'similarite' => $similarite,
+            'similarity' => $similarity,
             'matrix' => $similarityMatrix
         ];
     }
 }
 ```
 
-### 5. Clustering de texte
+### 5. Text Clustering
 
-Service pour regrouper automatiquement des textes similaires.
+Service for automatically grouping similar texts together.
 
 ```php
 use Cywolf\NlpTools\Service\TextClusteringService;
 
-class VotreClasse {
+class YourClass {
     protected TextClusteringService $clustering;
 
     public function __construct(TextClusteringService $clustering) 
@@ -170,31 +166,31 @@ class VotreClasse {
         $this->clustering = $clustering;
     }
 
-    public function exempleClustering(): array 
+    public function clusteringExample(): array 
     {
-        $textes = [
-            "Le chat dort sur le canapé", 
-            "Mon chien joue dans le jardin",
-            "J'aime les chats et les félins domestiques",
-            "Le chien est le meilleur ami de l'homme",
-            "Les animaux domestiques apportent de la joie"
+        $texts = [
+            "The cat sleeps on the couch", 
+            "My dog plays in the garden",
+            "I like cats and domestic felines",
+            "The dog is man's best friend",
+            "Pets bring joy"
         ];
 
-        // Clustering K-means (k=2 groupes)
-        $kMeansClusters = $this->clustering->kMeansClustering($textes, 2, 'fr');
+        // K-means clustering (k=2 groups)
+        $kMeansClusters = $this->clustering->kMeansClustering($texts, 2, 'en');
         
-        // Clustering hiérarchique
+        // Hierarchical clustering
         $hierarchicalClusters = $this->clustering->hierarchicalClustering(
-            $textes, 
-            0.6, // Seuil de distance
-            'fr'
+            $texts, 
+            0.6, // Distance threshold
+            'en'
         );
         
-        // Clustering par similarité
+        // Similarity-based clustering
         $similarityClusters = $this->clustering->similarityBasedClustering(
-            $textes,
-            0.7, // Seuil de similarité
-            'fr'
+            $texts,
+            0.7, // Similarity threshold
+            'en'
         );
         
         return [
@@ -206,14 +202,14 @@ class VotreClasse {
 }
 ```
 
-### 6. Modélisation de sujets (Topic Modeling)
+### 6. Topic Modeling
 
-Service pour extraire des thèmes et sujets à partir de collections de textes.
+Service for extracting themes and topics from text collections.
 
 ```php
 use Cywolf\NlpTools\Service\TopicModelingService;
 
-class VotreClasse {
+class YourClass {
     protected TopicModelingService $topicModeling;
 
     public function __construct(TopicModelingService $topicModeling) 
@@ -221,47 +217,47 @@ class VotreClasse {
         $this->topicModeling = $topicModeling;
     }
 
-    public function exempleTopics(): array 
+    public function topicsExample(): array 
     {
-        $textes = [
-            "La nouvelle politique économique favorise les entreprises locales",
-            "Le gouvernement annonce un plan de relance économique",
-            "Les chercheurs ont découvert un nouveau traitement médical",
-            "Une étude scientifique révèle l'impact du climat sur la santé",
-            "La bourse a connu une forte hausse suite aux annonces économiques"
+        $texts = [
+            "The new economic policy favors local businesses",
+            "The government announces an economic recovery plan",
+            "Researchers have discovered a new medical treatment",
+            "A scientific study reveals the impact of climate on health",
+            "The stock market saw a strong rise following economic announcements"
         ];
 
-        // Extraire des sujets (topics)
+        // Extract topics
         $topics = $this->topicModeling->extractTopics(
-            $textes,
-            2, // Nombre de sujets à extraire
-            5  // Nombre de termes par sujet
+            $texts,
+            2, // Number of topics to extract
+            5  // Number of terms per topic
         );
         
-        // Extraire les termes représentatifs d'un groupe de textes
-        $termes = $this->topicModeling->extractTopicTerms(
-            $textes,
-            10 // Nombre de termes à extraire
+        // Extract representative terms from a group of texts
+        $terms = $this->topicModeling->extractTopicTerms(
+            $texts,
+            10 // Number of terms to extract
         );
         
-        // Extraire des expressions clés d'un texte
-        $phrasesCles = $this->topicModeling->extractKeyPhrases(
-            $textes[0],
-            3 // Nombre d'expressions à extraire
+        // Extract key phrases from a text
+        $keyPhrases = $this->topicModeling->extractKeyPhrases(
+            $texts[0],
+            3 // Number of phrases to extract
         );
         
         return [
             'topics' => $topics,
-            'termes' => $termes,
-            'phrases_cles' => $phrasesCles
+            'terms' => $terms,
+            'key_phrases' => $keyPhrases
         ];
     }
 }
 ```
 
-## Exemple d'utilisation dans une extension TYPO3
+## Example of use in a TYPO3 extension
 
-### Configuration Services.yaml
+### Services.yaml configuration
 
 ```yaml
 services:
@@ -270,17 +266,17 @@ services:
     autoconfigure: true
     public: false
 
-  VotreVendor\VotreExtension\:
+  YourVendor\YourExtension\:
     resource: '../Classes/*'
 
-  VotreVendor\VotreExtension\Service\TextProcessingService:
+  YourVendor\YourExtension\Service\TextProcessingService:
     public: true
 ```
 
-### Classe de service
+### Service class
 
 ```php
-namespace VotreVendor\VotreExtension\Service;
+namespace YourVendor\YourExtension\Service;
 
 use Cywolf\NlpTools\Service\TextAnalysisService;
 use Cywolf\NlpTools\Service\LanguageDetectionService;
@@ -308,10 +304,10 @@ class TextProcessingService
 
     public function processText(string $text): array 
     {
-        // Détection de la langue
+        // Language detection
         $language = $this->languageDetector->detectLanguage($text);
 
-        // Analyse complète
+        // Complete analysis
         return [
             'language' => $language,
             'tokens' => $this->textAnalyzer->tokenize($text),
@@ -323,7 +319,7 @@ class TextProcessingService
     
     public function analyzeMultipleTexts(array $texts): array
     {
-        // Clustering et analyse thématique
+        // Clustering and topic analysis
         $clusters = $this->clustering->kMeansClustering($texts, 3);
         $topics = $this->topicModeling->extractTopics($texts, 3);
         
@@ -335,15 +331,15 @@ class TextProcessingService
 }
 ```
 
-## Utilisation avec cache
+## Using with cache
 
-Pour améliorer les performances, vous pouvez injecter un cache TYPO3 dans les services:
+To improve performance, you can inject a TYPO3 cache into the services:
 
 ```php
 use TYPO3\CMS\Core\Cache\CacheManager;
 use Cywolf\NlpTools\Service\TextAnalysisService;
 
-class VotreController
+class YourController
 {
     protected TextAnalysisService $textAnalyzer;
     protected CacheManager $cacheManager;
@@ -356,30 +352,30 @@ class VotreController
         $this->cacheManager = $cacheManager;
     }
     
-    public function votreAction(): void
+    public function yourAction(): void
     {
-        // Récupérer le cache
+        // Get the cache
         $cache = $this->cacheManager->getCache('nlp_tools');
         
-        // Le passer à un service pour des calculs plus rapides
+        // Pass it to a service for faster calculations
         $this->textAnalyzer->setCache($cache);
         
-        // Utiliser le service normalement
+        // Use the service normally
         $tokens = $this->textAnalyzer->tokenize($text);
     }
 }
 ```
 
-## Compatibilité TYPO3
+## TYPO3 Compatibility
 
-Cette extension est compatible avec:
+This extension is compatible with:
 - TYPO3 v12.4+
 - TYPO3 v13.0+
 
-## Notes importantes
+## Important Notes
 
-- La détection de langue utilise la configuration de langue TYPO3 si disponible
-- Le stemming utilise une implémentation interne simplifiée, avec fallback sur la bibliothèque Snowball
-- Les services sont injectables via l'injection de dépendances de TYPO3
-- Les algorithmes de clustering sont optimisés pour des performances acceptables même sur de grandes collections de textes
-- Utilisez le cache pour améliorer les performances sur des opérations répétitives
+- Language detection uses TYPO3 language configuration if available
+- Stemming uses a simplified internal implementation, with fallback to the Snowball library
+- Services can be injected via TYPO3's dependency injection
+- Clustering algorithms are optimized for acceptable performance even on large text collections
+- Use caching to improve performance on repetitive operations

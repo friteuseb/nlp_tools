@@ -2,10 +2,10 @@
 namespace Cywolf\NlpTools\Service;
 
 use TYPO3\CMS\Core\SingletonInterface;
-use Wamania\Stemmer\French;
-use Wamania\Stemmer\English;
-use Wamania\Stemmer\German;
-use Wamania\Stemmer\Spanish;
+use Wamania\Snowball\French;
+use Wamania\Snowball\English;
+use Wamania\Snowball\German;
+use Wamania\Snowball\Spanish;
 use TYPO3\CMS\Core\Cache\Frontend\FrontendInterface;
 
 class TextAnalysisService implements SingletonInterface
@@ -25,25 +25,68 @@ class TextAnalysisService implements SingletonInterface
         $this->cache = $cache;
     }
 
+    /**
+     * Sets a cache instance
+     * 
+     * @param FrontendInterface $cache
+     * @return void
+     */
+    public function setCache(FrontendInterface $cache): void
+    {
+        $this->cache = $cache;
+    }
+
+    /**
+     * Removes stop words from a text
+     *
+     * @param string $text Text to process
+     * @param string|null $language Language code (auto-detected if null)
+     * @return string Text without stop words
+     */
     public function removeStopWords(string $text, ?string $language = null): string
     {
-        // Détecter la langue si non spécifiée
+        // Detect language if not specified
         $language = $language ?? $this->languageDetector->detectLanguage($text);
         
-        // Récupérer les stop words pour la langue
+        // Get stop words for the language
         $stopWords = $this->stopWordsFactory->getStopWords($language);
         $stopWordsList = $stopWords->getStopWords();
         
-        // Tokenize le texte
+        // Tokenize the text
         $words = $this->tokenize($text);
         
-        // Filtrer les stop words
+        // Filter stop words
         $filteredWords = array_filter($words, function($word) use ($stopWordsList) {
             return !in_array(mb_strtolower($word), $stopWordsList, true);
         });
         
-        // Reconstruire le texte
+        // Rebuild the text
         return implode(' ', $filteredWords);
+    }
+    
+    /**
+     * Extract n-grams from a text
+     *
+     * @param string $text Input text
+     * @param int $n Size of n-grams (default: 3)
+     * @return array Array of n-grams with their frequencies
+     */
+    public function extractNGrams(string $text, int $n = 3): array
+    {
+        $ngrams = [];
+        $text = mb_strtolower($text);
+        
+        // Add padding for beginning and end
+        $padding = str_repeat('_', $n - 1);
+        $text = $padding . $text . $padding;
+        
+        // Extract n-grams
+        for ($i = 0; $i <= mb_strlen($text) - $n; $i++) {
+            $ngram = mb_substr($text, $i, $n);
+            $ngrams[$ngram] = ($ngrams[$ngram] ?? 0) + 1;
+        }
+        
+        return $ngrams;
     }
     
     private function getStemmer(string $language): ?object
@@ -52,64 +95,37 @@ class TextAnalysisService implements SingletonInterface
             return $this->stemmers[$language];
         }
 
-        // Implémenter un stemming simple pour éviter les problèmes de dépendance
-        // Cette classe de stemming fera l'affaire en attendant de résoudre les problèmes avec la bibliothèque
-        return new class($language) {
-            private string $lang;
-            
-            public function __construct(string $lang) {
-                $this->lang = $lang;
-            }
-            
-            public function stem(string $word): string {
-                // Implémentation basique qui fonctionne pour beaucoup de langues européennes
-                // Enlève les terminaisons les plus communes
-                $word = mb_strtolower($word);
-                
-                // Supprimer les s du pluriel (marche pour EN, FR, ES)
-                if (mb_strlen($word) > 3 && mb_substr($word, -1) === 's') {
-                    $word = mb_substr($word, 0, -1);
-                }
-                
-                // Supprimer quelques terminaisons fréquentes selon la langue
-                if ($this->lang === 'fr') {
-                    $suffixes = ['ement', 'euse', 'eux', 'ant', 'ent', 'er', 'ez', 'é', 'ée'];
-                } elseif ($this->lang === 'en') {
-                    $suffixes = ['ing', 'ed', 'ly', 'ment', 'ers', 'or', 'ies', 'es', 'y'];
-                } elseif ($this->lang === 'de') {
-                    $suffixes = ['ung', 'lich', 'heit', 'keit', 'end', 'en', 'er'];
-                } elseif ($this->lang === 'es') {
-                    $suffixes = ['mente', 'ción', 'dor', 'ando', 'iendo', 'ado', 'ido', 'ar', 'er', 'ir'];
-                } else {
-                    $suffixes = ['ing', 'ed', 'ly']; // Défaut basé sur l'anglais
-                }
-                
-                foreach ($suffixes as $suffix) {
-                    if (mb_strlen($word) > (mb_strlen($suffix) + 2) && mb_substr($word, -mb_strlen($suffix)) === $suffix) {
-                        return mb_substr($word, 0, -mb_strlen($suffix));
-                    }
-                }
-                
-                return $word;
-            }
+        $this->stemmers[$language] = match($language) {
+            'fr' => new French(),
+            'en' => new English(),
+            'de' => new German(),
+            'es' => new Spanish(),
+            default => null
         };
 
         return $this->stemmers[$language];
     }
 
-    public function stem(string $text, ?string $language = null): array
+    /**
+     * Stem a text (reduce words to their root form)
+     *
+     * @param string $text Text to stem
+     * @param string|null $language Language code (auto-detected if null)
+     * @return string Stemmed text
+     */
+    public function stem(string $text, ?string $language = null): string
     {
         $language = $language ?? $this->languageDetector->detectLanguage($text);
         $words = $this->tokenize($text);
         
-        // Vérifier si on a un stemmer pour cette langue
+        // Check if we have a stemmer for this language
         $stemmer = $this->getStemmer($language);
         if (!$stemmer) {
-            return $words; // Retourner les mots tokenisés si pas de stemmer
+            return $text; // Return original text if no stemmer
         }
 
         $stemmedWords = array_map(function($word) use ($stemmer, $language) {
-            // Utiliser le cache si disponible
+            // Use cache if available
             if ($this->cache) {
                 $cacheIdentifier = 'stem_' . $language . '_' . md5($word);
                 $stemmedWord = $this->cache->get($cacheIdentifier);
@@ -123,15 +139,21 @@ class TextAnalysisService implements SingletonInterface
             return $stemmer->stem($word);
         }, $words);
         
-        return $stemmedWords; // Retourner le tableau de mots stemmisés
+        return implode(' ', $stemmedWords);
     }
 
+    /**
+     * Tokenize a text into words
+     *
+     * @param string $text Text to tokenize
+     * @return array Array of tokens/words
+     */
     public function tokenize(string $text): array
     {
-        // Pre-processing du texte
+        // Pre-processing of text
         $text = $this->cleanText($text);
         
-        // Tokenization plus avancée avec support Unicode
+        // Advanced tokenization with Unicode support
         $tokens = preg_split('/[\s,\.!?\(\)\[\]{}"\']+/u', $text, -1, PREG_SPLIT_NO_EMPTY);
         
         // Check if preg_split failed and returned false
@@ -140,19 +162,19 @@ class TextAnalysisService implements SingletonInterface
         }
         
         return array_filter($tokens, function($token) {
-            return mb_strlen($token) > 1; // Ignorer les tokens trop courts
+            return mb_strlen($token) > 1; // Ignore tokens that are too short
         });
     }
 
     private function cleanText(string $text): string
     {
-        // Normalisation UTF-8
+        // UTF-8 normalization
         $text = mb_convert_encoding($text, 'UTF-8', mb_detect_encoding($text));
         
-        // Conversion en minuscules
+        // Convert to lowercase
         $text = mb_strtolower($text);
         
-        // Suppression des accents
+        // Remove accents
         $text = strtr(
             utf8_decode($text),
             utf8_decode('àáâãäçèéêëìíîïñòóôõöùúûüýÿÀÁÂÃÄÇÈÉÊËÌÍÎÏÑÒÓÔÕÖÙÚÛÜÝ'),
