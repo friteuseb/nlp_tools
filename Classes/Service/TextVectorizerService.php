@@ -62,12 +62,9 @@ class TextVectorizerService implements SingletonInterface
         foreach ($texts as $index => $text) {
             // Remove stop words and apply stemming
             $cleanText = $this->textAnalyzer->removeStopWords($text, $language);
-            $stemmed = $this->textAnalyzer->tokenize($this->textAnalyzer->stem($cleanText, $language));
+            $stemmed = $this->textAnalyzer->stem($cleanText, $language); // Now returns an array
             $processedTexts[$index] = $stemmed;
         }
-
-        // Rest of the implementation remains the same
-        // ... [original code continues]
 
         // 2. Build vocabulary (unique terms across all documents)
         $vocabulary = [];
@@ -147,7 +144,7 @@ class TextVectorizerService implements SingletonInterface
     {
         // Detect language if not provided
         if ($language === null && !empty($texts)) {
-            $language = $this->textAnalyzer->detectLanguage($texts[0] ?? '');
+            $language = $this->languageDetector->detectLanguage($texts[0] ?? '');
         }
 
         // Cache key

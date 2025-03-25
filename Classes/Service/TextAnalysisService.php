@@ -2,10 +2,10 @@
 namespace Cywolf\NlpTools\Service;
 
 use TYPO3\CMS\Core\SingletonInterface;
-use Wamania\Snowball\French;
-use Wamania\Snowball\English;
-use Wamania\Snowball\German;
-use Wamania\Snowball\Spanish;
+use Wamania\Snowball\Stemmer\French;
+use Wamania\Snowball\Stemmer\English;
+use Wamania\Snowball\Stemmer\German;
+use Wamania\Snowball\Stemmer\Spanish;
 use TYPO3\CMS\Core\Cache\Frontend\FrontendInterface;
 
 class TextAnalysisService implements SingletonInterface
@@ -106,41 +106,41 @@ class TextAnalysisService implements SingletonInterface
         return $this->stemmers[$language];
     }
 
-    /**
-     * Stem a text (reduce words to their root form)
-     *
-     * @param string $text Text to stem
-     * @param string|null $language Language code (auto-detected if null)
-     * @return string Stemmed text
-     */
-    public function stem(string $text, ?string $language = null): string
-    {
-        $language = $language ?? $this->languageDetector->detectLanguage($text);
-        $words = $this->tokenize($text);
-        
-        // Check if we have a stemmer for this language
-        $stemmer = $this->getStemmer($language);
-        if (!$stemmer) {
-            return $text; // Return original text if no stemmer
-        }
-
-        $stemmedWords = array_map(function($word) use ($stemmer, $language) {
-            // Use cache if available
-            if ($this->cache) {
-                $cacheIdentifier = 'stem_' . $language . '_' . md5($word);
-                $stemmedWord = $this->cache->get($cacheIdentifier);
-                if ($stemmedWord === false) {
-                    $stemmedWord = $stemmer->stem($word);
-                    $this->cache->set($cacheIdentifier, $stemmedWord);
-                }
-                return $stemmedWord;
-            }
+        /**
+         * Stem a text (reduce words to their root form)
+         *
+         * @param string $text Text to stem
+         * @param string|null $language Language code (auto-detected if null)
+         * @return array Array of stemmed words
+         */
+        public function stem(string $text, ?string $language = null): array
+        {
+            $language = $language ?? $this->languageDetector->detectLanguage($text);
+            $words = $this->tokenize($text);
             
-            return $stemmer->stem($word);
-        }, $words);
-        
-        return implode(' ', $stemmedWords);
-    }
+            // Check if we have a stemmer for this language
+            $stemmer = $this->getStemmer($language);
+            if (!$stemmer) {
+                return $words; // Return tokenized words as an array if no stemmer
+            }
+
+            $stemmedWords = array_map(function($word) use ($stemmer, $language) {
+                // Use cache if available
+                if ($this->cache) {
+                    $cacheIdentifier = 'stem_' . $language . '_' . md5($word);
+                    $stemmedWord = $this->cache->get($cacheIdentifier);
+                    if ($stemmedWord === false) {
+                        $stemmedWord = $stemmer->stem($word);
+                        $this->cache->set($cacheIdentifier, $stemmedWord);
+                    }
+                    return $stemmedWord;
+                }
+                
+                return $stemmer->stem($word);
+            }, $words);
+            
+            return $stemmedWords; // Return the array of stemmed words
+        }
 
     /**
      * Tokenize a text into words
