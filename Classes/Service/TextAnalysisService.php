@@ -175,9 +175,10 @@ class TextAnalysisService implements SingletonInterface
         $text = mb_strtolower($text);
         
         // Remove accents
+        // Alternative avec mb_convert_encoding à la place de utf8_decode qui ne fonctionne pas avec TYPO3 12
         $text = strtr(
-            utf8_decode($text),
-            utf8_decode('àáâãäçèéêëìíîïñòóôõöùúûüýÿÀÁÂÃÄÇÈÉÊËÌÍÎÏÑÒÓÔÕÖÙÚÛÜÝ'),
+            mb_convert_encoding($text, 'ISO-8859-1', 'UTF-8'),
+            mb_convert_encoding('àáâãäçèéêëìíîïñòóôõöùúûüýÿÀÁÂÃÄÇÈÉÊËÌÍÎÏÑÒÓÔÕÖÙÚÛÜÝ', 'ISO-8859-1', 'UTF-8'),
             'aaaaaceeeeiiiinooooouuuuyyAAAAACEEEEIIIINOOOOOUUUUY'
         );
         
