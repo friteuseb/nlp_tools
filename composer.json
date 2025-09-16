@@ -1,5 +1,6 @@
 {
     "name": "cywolf/nlp-tools",
+    "version": "1.3.0",
     "type": "typo3-cms-extension",
     "description": "Natural Language Processing tools for TYPO3 with language detection, stemming, stop words filtering, and text clustering",
     "license": "GPL-2.0-or-later",
