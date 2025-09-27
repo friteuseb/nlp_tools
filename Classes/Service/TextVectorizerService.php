@@ -46,6 +46,11 @@ class TextVectorizerService implements SingletonInterface
      */
     public function createTfIdfVectors(array $texts, ?string $language = null): array
     {
+        // Input validation and early return
+        if (empty($texts)) {
+            return ['vectors' => [], 'vocabulary' => [], 'idf' => []];
+        }
+
         // Detect language if not provided
         if ($language === null && !empty($texts)) {
             $language = $this->languageDetector->detectLanguage($texts[0] ?? '');
@@ -59,7 +64,12 @@ class TextVectorizerService implements SingletonInterface
 
         // 1. Tokenize and preprocess all texts
         $processedTexts = [];
+        $maxTextLength = 5000; // Limit text length for performance
+
         foreach ($texts as $index => $text) {
+            // Limit text length for performance
+            $text = $this->limitTextLength($text, $maxTextLength);
+
             // Remove stop words and apply stemming
             $cleanText = $this->textAnalyzer->removeStopWords($text, $language);
             $stemmed = $this->textAnalyzer->stem($cleanText, $language); // Now returns an array
@@ -263,5 +273,29 @@ class TextVectorizerService implements SingletonInterface
         }
         
         return $similarityMatrix;
+    }
+
+    /**
+     * Limit text length for performance optimization
+     *
+     * @param string $text Input text
+     * @param int $maxLength Maximum length
+     * @return string Limited text
+     */
+    private function limitTextLength(string $text, int $maxLength): string
+    {
+        if (mb_strlen($text) <= $maxLength) {
+            return $text;
+        }
+
+        // Truncate at word boundary if possible
+        $truncated = mb_substr($text, 0, $maxLength);
+        $lastSpace = mb_strrpos($truncated, ' ');
+
+        if ($lastSpace !== false) {
+            return mb_substr($truncated, 0, $lastSpace);
+        }
+
+        return $truncated;
     }
 }

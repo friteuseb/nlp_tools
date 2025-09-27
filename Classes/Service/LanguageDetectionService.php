@@ -17,39 +17,44 @@ class LanguageDetectionService implements SingletonInterface
 
     public function detectLanguage(string $text): string
     {
-        // Priorité 1: Utiliser la langue TYPO3 si disponible et fiable
+        // Input validation
+        if (empty(trim($text))) {
+            return 'en'; // Default fallback
+        }
+
+        // Priority 1: Use TYPO3 language if available and reliable
         $typo3Language = $this->getTypo3LanguageContext();
         if ($typo3Language !== null) {
             return $typo3Language;
         }
 
-        // Priorité 2: Détection automatique par analyse du contenu
+        // Priority 2: Automatic detection by content analysis
         if (mb_strlen(trim($text)) < 50) {
-            // Texte trop court, utiliser la langue par défaut du site
+            // Text too short, use site default language
             return $this->getDefaultSiteLanguage();
         }
 
-        // Nettoyage du texte
+        // Text cleaning
         $text = $this->cleanText($text);
-        
-        // Extraction des trigrams
+
+        // Trigram extraction
         $textTrigrams = $this->extractTrigrams($text);
-        
-        // Comparaison avec les profils de langue
+
+        // Comparison with language profiles
         $scores = [];
         foreach ($this->languageProfiles as $lang => $profile) {
             $scores[$lang] = $this->calculateLanguageScore($textTrigrams, $profile);
         }
 
-        // Vérification de la confiance du résultat
+        // Confidence check of result
         arsort($scores);
         $topLanguages = array_slice($scores, 0, 2, true);
-        
+
         if (count($topLanguages) >= 2) {
             $firstScore = reset($topLanguages);
             $secondScore = next($topLanguages);
-            
-            // Si la différence est trop faible, utiliser la langue du contexte TYPO3
+
+            // If difference is too small, use TYPO3 context language
             if (($firstScore - $secondScore) / $firstScore < 0.3) {
                 $contextLanguage = $this->getTypo3LanguageContext();
                 if ($contextLanguage && isset($scores[$contextLanguage])) {
@@ -63,7 +68,7 @@ class LanguageDetectionService implements SingletonInterface
 
     private function initializeLanguageProfiles(): void
     {
-        $languages = ['fr', 'en', 'de', 'es'];
+        $languages = ['fr', 'en', 'de', 'es', 'it', 'pt'];
         foreach ($languages as $lang) {
             $stopWords = $this->stopWordsFactory->getStopWords($lang);
             $this->languageProfiles[$lang] = $this->createLanguageProfile($stopWords->getStopWords());
@@ -111,41 +116,41 @@ class LanguageDetectionService implements SingletonInterface
 
     private function getTypo3LanguageContext(): ?string
     {
-        // TYPO3 12/13: Utiliser le Context API pour obtenir la langue
+        // TYPO3 12/13: Use Context API to get language
         try {
             $context = GeneralUtility::makeInstance(\TYPO3\CMS\Core\Context\Context::class);
             $languageAspect = $context->getAspect('language');
             $languageId = $languageAspect->getId();
-            
-            // Obtenir le site et la langue configurée
+
+            // Get site and configured language
             if ($languageId > 0) {
                 $siteFinder = GeneralUtility::makeInstance(\TYPO3\CMS\Core\Site\SiteFinder::class);
                 $request = $GLOBALS['TYPO3_REQUEST'] ?? null;
-                
+
                 if ($request && $request->getAttribute('site')) {
                     $site = $request->getAttribute('site');
                     $siteLanguage = $site->getLanguageById($languageId);
-                    
+
                     if ($siteLanguage) {
                         $locale = $siteLanguage->getLocale();
-                        // Extraire le code de langue du locale (ex: de_DE -> de)
+                        // Extract language code from locale (e.g., de_DE -> de)
                         return strtolower(substr($locale->getLanguageCode(), 0, 2));
                     }
                 }
             }
-            
-            // Fallback: mapping statique pour compatibilité
+
+            // Fallback: static mapping for compatibility
             return $this->getStaticLanguageMapping($languageId);
-            
+
         } catch (\Exception $e) {
-            // En cas d'erreur, essayer les méthodes de fallback
+            // In case of error, try fallback methods
             return $this->getFallbackLanguage();
         }
     }
 
     private function getStaticLanguageMapping(int $languageId): ?string
     {
-        // Mapping des UIDs de langue TYPO3 vers les codes ISO
+        // Mapping TYPO3 language UIDs to ISO codes
         $languageMap = [
             0 => 'en', // Default
             1 => 'fr',
@@ -153,7 +158,12 @@ class LanguageDetectionService implements SingletonInterface
             3 => 'es',
             4 => 'it',
             5 => 'pt',
-            // Ajouter d'autres mappings selon votre configuration
+            6 => 'nl', // Dutch
+            7 => 'da', // Danish
+            8 => 'sv', // Swedish
+            9 => 'no', // Norwegian
+            10 => 'fi', // Finnish
+            // Add other mappings according to your configuration
         ];
 
         return $languageMap[$languageId] ?? null;
@@ -161,7 +171,7 @@ class LanguageDetectionService implements SingletonInterface
 
     private function getFallbackLanguage(): ?string
     {
-        // TYPO3 < 12: Utiliser TSFE si disponible
+        // TYPO3 < 12: Use TSFE if available
         if (isset($GLOBALS['TSFE']) && $GLOBALS['TSFE']->sys_language_uid >= 0) {
             return $this->getStaticLanguageMapping($GLOBALS['TSFE']->sys_language_uid);
         }

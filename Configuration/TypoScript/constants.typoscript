@@ -1,0 +1,14 @@
+# NLP Tools extension configuration
+nlp_tools {
+    # Cache TTL in seconds (default: 3600 = 1 hour)
+    cacheTtl = 3600
+
+    # Maximum text length for processing (default: 10000)
+    maxTextLength = 10000
+
+    # Default language for fallback (default: en)
+    defaultLanguage = en
+
+    # Enable/disable caching (default: 1)
+    enableCache = 1
+}

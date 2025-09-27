@@ -6,6 +6,8 @@ use Wamania\Snowball\Stemmer\French;
 use Wamania\Snowball\Stemmer\English;
 use Wamania\Snowball\Stemmer\German;
 use Wamania\Snowball\Stemmer\Spanish;
+use Wamania\Snowball\Stemmer\Italian;
+use Wamania\Snowball\Stemmer\Portuguese;
 use TYPO3\CMS\Core\Cache\Frontend\FrontendInterface;
 
 class TextAnalysisService implements SingletonInterface
@@ -45,6 +47,11 @@ class TextAnalysisService implements SingletonInterface
      */
     public function removeStopWords(string $text, ?string $language = null): string
     {
+        // Input validation
+        if (empty($text)) {
+            return '';
+        }
+
         // Detect language if not specified
         $language = $language ?? $this->languageDetector->detectLanguage($text);
         
@@ -100,22 +107,29 @@ class TextAnalysisService implements SingletonInterface
             'en' => new English(),
             'de' => new German(),
             'es' => new Spanish(),
+            'it' => new Italian(),
+            'pt' => new Portuguese(),
             default => null
         };
 
         return $this->stemmers[$language];
     }
 
-        /**
-         * Stem a text (reduce words to their root form)
-         *
-         * @param string $text Text to stem
-         * @param string|null $language Language code (auto-detected if null)
-         * @return array Array of stemmed words
-         */
-        public function stem(string $text, ?string $language = null): array
-        {
-            $language = $language ?? $this->languageDetector->detectLanguage($text);
+    /**
+     * Stem a text (reduce words to their root form)
+     *
+     * @param string $text Text to stem
+     * @param string|null $language Language code (auto-detected if null)
+     * @return array Array of stemmed words
+     */
+    public function stem(string $text, ?string $language = null): array
+    {
+        // Input validation
+        if (empty($text)) {
+            return [];
+        }
+
+        $language = $language ?? $this->languageDetector->detectLanguage($text);
             $words = $this->tokenize($text);
             
             // Check if we have a stemmer for this language
@@ -150,19 +164,26 @@ class TextAnalysisService implements SingletonInterface
      */
     public function tokenize(string $text): array
     {
+        // Input validation
+        if (empty($text)) {
+            return [];
+        }
+
         // Pre-processing of text
         $text = $this->cleanText($text);
-        
+
         // Advanced tokenization with Unicode support
-        $tokens = preg_split('/[\s,\.!?\(\)\[\]{}"\']+/u', $text, -1, PREG_SPLIT_NO_EMPTY);
-        
+        // Handle contractions, numbers, and special characters better
+        $tokens = preg_split('/[\s,\.!?\(\)\[\]{}"\';:]+/u', $text, -1, PREG_SPLIT_NO_EMPTY);
+
         // Check if preg_split failed and returned false
         if ($tokens === false) {
-            return []; // Return empty array instead of false
+            return [];
         }
-        
+
+        // Filter tokens: keep words (including numbers) longer than 1 character
         return array_filter($tokens, function($token) {
-            return mb_strlen($token) > 1; // Ignore tokens that are too short
+            return mb_strlen($token) > 1 && preg_match('/\w/u', $token);
         });
     }
 
@@ -170,18 +191,13 @@ class TextAnalysisService implements SingletonInterface
     {
         // UTF-8 normalization
         $text = mb_convert_encoding($text, 'UTF-8', mb_detect_encoding($text));
-        
+
         // Convert to lowercase
         $text = mb_strtolower($text);
-        
-        // Remove accents
-        // Alternative avec mb_convert_encoding à la place de utf8_decode qui ne fonctionne pas avec TYPO3 12
-        $text = strtr(
-            mb_convert_encoding($text, 'ISO-8859-1', 'UTF-8'),
-            mb_convert_encoding('àáâãäçèéêëìíîïñòóôõöùúûüýÿÀÁÂÃÄÇÈÉÊËÌÍÎÏÑÒÓÔÕÖÙÚÛÜÝ', 'ISO-8859-1', 'UTF-8'),
-            'aaaaaceeeeiiiinooooouuuuyyAAAAACEEEEIIIINOOOOOUUUUY'
-        );
-        
+
+        // Remove accents using proper transliteration
+        $text = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $text);
+
         return $text;
     }
 }

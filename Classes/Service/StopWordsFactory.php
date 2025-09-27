@@ -6,6 +6,8 @@ use Cywolf\NlpTools\StopWords\FrenchStopWords;
 use Cywolf\NlpTools\StopWords\EnglishStopWords;
 use Cywolf\NlpTools\StopWords\GermanStopWords;
 use Cywolf\NlpTools\StopWords\SpanishStopWords;
+use Cywolf\NlpTools\StopWords\ItalianStopWords;
+use Cywolf\NlpTools\StopWords\PortugueseStopWords;
 use TYPO3\CMS\Core\SingletonInterface;
 
 class StopWordsFactory implements SingletonInterface
@@ -23,6 +25,8 @@ class StopWordsFactory implements SingletonInterface
             'en' => new EnglishStopWords(),
             'de' => new GermanStopWords(),
             'es' => new SpanishStopWords(),
+            'it' => new ItalianStopWords(),
+            'pt' => new PortugueseStopWords(),
             default => new EnglishStopWords(), // Fallback to English
         };
 
