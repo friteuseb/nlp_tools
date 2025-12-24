@@ -1,6 +1,11 @@
 # NLP Tools for TYPO3
 
-A comprehensive TYPO3 extension for Natural Language Processing, compatible with TYPO3 v12 and v13.
+[![TYPO3 12](https://img.shields.io/badge/TYPO3-12-orange.svg)](https://get.typo3.org/version/12)
+[![TYPO3 13](https://img.shields.io/badge/TYPO3-13-orange.svg)](https://get.typo3.org/version/13)
+[![TYPO3 14](https://img.shields.io/badge/TYPO3-14-orange.svg)](https://get.typo3.org/version/14)
+[![License](https://img.shields.io/packagist/l/cywolf/nlp-tools.svg)](https://packagist.org/packages/cywolf/nlp-tools)
+
+A comprehensive TYPO3 extension for Natural Language Processing, compatible with TYPO3 v12, v13 and v14.
 
 ## Installation
 
@@ -371,6 +376,9 @@ class YourController
 This extension is compatible with:
 - TYPO3 v12.4+
 - TYPO3 v13.0+
+- TYPO3 v14.0+
+
+**PHP Requirements:** PHP 8.1 or higher
 
 ## Important Notes
 

@@ -116,7 +116,7 @@ class LanguageDetectionService implements SingletonInterface
 
     private function getTypo3LanguageContext(): ?string
     {
-        // TYPO3 12/13: Use Context API to get language
+        // TYPO3 14: Use Context API to get language
         try {
             $context = GeneralUtility::makeInstance(\TYPO3\CMS\Core\Context\Context::class);
             $languageAspect = $context->getAspect('language');
@@ -171,12 +171,15 @@ class LanguageDetectionService implements SingletonInterface
 
     private function getFallbackLanguage(): ?string
     {
-        // TYPO3 < 12: Use TSFE if available
-        if (isset($GLOBALS['TSFE']) && $GLOBALS['TSFE']->sys_language_uid >= 0) {
-            return $this->getStaticLanguageMapping($GLOBALS['TSFE']->sys_language_uid);
+        // TYPO3 14: Use Context API for language fallback
+        try {
+            $context = GeneralUtility::makeInstance(\TYPO3\CMS\Core\Context\Context::class);
+            $languageAspect = $context->getAspect('language');
+            $languageId = $languageAspect->getId();
+            return $this->getStaticLanguageMapping($languageId);
+        } catch (\Exception $e) {
+            return null;
         }
-        
-        return null;
     }
 
     private function getDefaultSiteLanguage(): string

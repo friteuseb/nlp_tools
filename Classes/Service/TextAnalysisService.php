@@ -29,13 +29,34 @@ class TextAnalysisService implements SingletonInterface
 
     /**
      * Sets a cache instance
-     * 
+     *
      * @param FrontendInterface $cache
      * @return void
      */
     public function setCache(FrontendInterface $cache): void
     {
         $this->cache = $cache;
+    }
+
+    /**
+     * Returns the StopWordsFactory instance
+     *
+     * @return StopWordsFactory
+     */
+    public function getStopWordsFactory(): StopWordsFactory
+    {
+        return $this->stopWordsFactory;
+    }
+
+    /**
+     * Detect the language of a text
+     *
+     * @param string $text Text to analyze
+     * @return string ISO 639-1 language code
+     */
+    public function detectLanguage(string $text): string
+    {
+        return $this->languageDetector->detectLanguage($text);
     }
 
     /**
